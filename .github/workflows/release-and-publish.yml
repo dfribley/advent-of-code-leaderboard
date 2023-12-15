@@ -1,0 +1,61 @@
+name: Release & Publish
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  release:
+    name: Release
+    strategy:
+      matrix:
+        kind: ['linux', 'macOS']
+        include:
+          - kind: linux
+            os: ubuntu-latest
+            target: linux-x64
+          - kind: macOS
+            os: macos-latest
+            target: osx-arm64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 7.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: cd AoC.Leaderboard.Cli && dotnet publish -c Release -r ${{ matrix.target }} --self-contained -o "aoclb-${{ matrix.target }}"
+    - name: Pack
+      shell: bash
+      run: |
+        release_name="aoclb-${{ matrix.target }}"
+
+        if [ "${{ matrix.target }}" == "win-x64" ]; then
+          7z a -tzip "${release_name}.zip" "./${release_name}/*"
+        else
+          tar czvf "${release_name}.tar.gz" "$release_name"
+        fi
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Upload artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: ./aoclb-${{ matrix.target }}.tar.gz
+        asset_name: aoclb-${{ matrix.target }}.tar.gz
+        asset_content_type: application/gzip
