@@ -25,7 +25,7 @@ public class ShowDayCommand : AsyncCommand<ShowDayCommand.Settings>
         {
             if (Day <= 0)
             {
-                Day += DateTime.Today.Day;
+                Day += DateTime.UtcNow.AddHours(-5).Day;
             }
 
             return 1 <= Day && Day <= 25
