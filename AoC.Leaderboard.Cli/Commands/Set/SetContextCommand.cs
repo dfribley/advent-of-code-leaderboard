@@ -24,19 +24,19 @@ public class SetContextCommand : AsyncCommand
         _setSessionCommand = setSessionCommand;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    public override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
         try
         {
-            await _mediator.Send(new GetSessionId());
+            await _mediator.Send(new GetSessionId(), cancellationToken);
         }
         catch (SessionNotSetException)
         {
-            await _setSessionCommand.ExecuteAsync(context, new SetSessionCommand.Settings());
+            await _setSessionCommand.ExecuteAsync(context, new SetSessionCommand.Settings(), cancellationToken);
         }
 
-        await _setEventCommand.ExecuteAsync(context);
-        await _setLeaderboardCommand.ExecuteAsync(context);
+        await _setEventCommand.ExecuteAsync(context, cancellationToken);
+        await _setLeaderboardCommand.ExecuteAsync(context, cancellationToken);
 
         return 0;
     }

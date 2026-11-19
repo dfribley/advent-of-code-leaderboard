@@ -20,18 +20,18 @@ public class ShowLeaderboardCommand : AsyncCommand<GlobalOptions>
         _setContextCommand = setContextCommand;
     }
 
-    public async override Task<int> ExecuteAsync(CommandContext context, GlobalOptions settings)
+    public async override Task<int> ExecuteAsync(CommandContext context, GlobalOptions settings, CancellationToken cancellationToken)
     {
         try
         {
-            await _mediator.Send(new GetContext());
+            await _mediator.Send(new GetContext(), cancellationToken);
         }
         catch (Exception e) when (e is EventNotSet || e is LeaderboardNotSet)
         {
-            await _setContextCommand.ExecuteAsync(context);
+            await _setContextCommand.ExecuteAsync(context, cancellationToken);
         }
 
-        var leaderboard = await _mediator.Send(new GetLeaderboard());
+        var leaderboard = await _mediator.Send(new GetLeaderboard(), cancellationToken);
 
         var table = new Table() { Border = TableBorder.Minimal };
         table.AddColumns("Place", "Score", "Stars", "Player");
@@ -51,8 +51,8 @@ public class ShowLeaderboardCommand : AsyncCommand<GlobalOptions>
                 if (rows[i].Completions.TryGetValue(day, out var completion))
                 {
                     color = completion.Part2 != null
-                        ? color = "yellow"
-                        : color = "aqua";
+                        ? "yellow"
+                        : "aqua";
                 }
 
                 stars += $"[{color}]*[/]";

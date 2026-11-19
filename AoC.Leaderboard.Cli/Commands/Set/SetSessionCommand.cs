@@ -20,14 +20,14 @@ public class SetSessionCommand : AsyncCommand<SetSessionCommand.Settings>
         _mediator = mediator;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         settings.SessionToken ??= AnsiConsole.Prompt(
             new TextPrompt<string>("Enter Advent of Code [green]Session Token[/]:")
                 .PromptStyle(Color.DeepSkyBlue3_1)
                 .Secret());
 
-        await _mediator.Send(new SetSession { SessionToken = settings.SessionToken });
+        await _mediator.Send(new SetSession { SessionToken = settings.SessionToken }, cancellationToken);
 
         return 0;
     }

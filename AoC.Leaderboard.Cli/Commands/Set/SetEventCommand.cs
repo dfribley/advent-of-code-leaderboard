@@ -1,5 +1,6 @@
 ﻿using AoC.Leaderboard.Domain.Context.Commands;
 using AoC.Leaderboard.Domain.Leaderboard.Queries;
+using AoC.Leaderboard.Domain.Models;
 using MediatR;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -15,15 +16,18 @@ public class SetEventCommand : AsyncCommand
         _mediator = mediator;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    public override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        var selectionPrompt = new SelectionPrompt<string>()
+        var events = await _mediator.Send(new GetEvents(), cancellationToken);
+        
+        var selectionPrompt = new SelectionPrompt<Event>()
             .Title("What event would you like to view?")
-            .AddChoices(await _mediator.Send(new GetEvents()))
-            .HighlightStyle(new Style(Color.Green3));
-        var eventId = AnsiConsole.Prompt(selectionPrompt);
+            .AddChoices(events)
+            .HighlightStyle(new Style(Color.Green3))
+            .UseConverter(e => e.Id);
+        var selectedEvent = AnsiConsole.Prompt(selectionPrompt);
 
-        await _mediator.Send(new SetEvent { EventId = eventId });
+        await _mediator.Send(new SetEvent { EventId = selectedEvent.Id }, cancellationToken);
 
         return 0;
     }

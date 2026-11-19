@@ -1,4 +1,6 @@
 ﻿using AoC.Leaderboard.Domain.Interfaces;
+using AoC.Leaderboard.Domain.Models;
+using AoC.Leaderboard.Infrastructure.Extensions;
 using HtmlAgilityPack;
 
 namespace AoC.Leaderboard.Infrastructure.WebInterface;
@@ -25,9 +27,9 @@ public class EventClient : IEventService
         return html.DocumentNode.SelectSingleNode("//h2").InnerText;
     }
 
-    public async Task<IEnumerable<string>> GetEventsAsync()
+    public async Task<IEnumerable<Event>> GetEventsAsync()
     {
-        var uri = $"events";
+        var uri = "events";
         var httpClient = _httpClientFactory.CreateClient(DependencyInjection.HttpClientName);
 
         var response = await httpClient.GetAsync(uri);
@@ -35,13 +37,12 @@ public class EventClient : IEventService
         var html = new HtmlDocument();
         html.LoadHtml(await response.Content.ReadAsStringAsync());
 
-        var events = new List<string>();
-
-        foreach (var eventDiv in html.DocumentNode.SelectNodes("//div[contains(@class, 'eventlist-event')]"))
-        {
-            events.Add(new string(eventDiv.FirstChild.InnerText.Where(char.IsDigit).ToArray()));
-        }
-
-        return events;
+        return html.DocumentNode.SelectNodes("//div[contains(@class, 'eventlist-event')]")
+            .Select(eventDiv => new Event
+            {
+                Id = eventDiv.SelectSingleNode(".//a").InnerText.ExtractInt32().ToString(),
+                Stars = eventDiv.SelectSingleNode(".//span")?.InnerText.ExtractInt32() ?? 0
+            })
+            .ToList();
     }
 }

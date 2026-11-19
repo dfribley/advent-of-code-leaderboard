@@ -34,7 +34,7 @@ namespace AoC.Leaderboard.Domain.Context.QueryHandlers
             {
                 var events = await _mediator.Send(new GetEvents(), cancellationToken);
                 currentContext.EventId = events
-                    .SingleOrDefault(e => e == GlobalContext.EventOverride)
+                    .SingleOrDefault(e => e.Id == GlobalContext.EventOverride)?.Id
                     ?? throw new EventNotFound { EventId = GlobalContext.EventOverride };
             }
 

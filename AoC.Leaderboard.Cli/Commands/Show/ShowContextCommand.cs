@@ -14,9 +14,9 @@ public class ShowContextCommand : AsyncCommand
         _mediator = mediator;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    public override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        var currentContext = await _mediator.Send(new GetContext());
+        var currentContext = await _mediator.Send(new GetContext(), cancellationToken);
 
         var table = new Table()
         {

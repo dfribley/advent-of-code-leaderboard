@@ -7,19 +7,12 @@ using Spectre.Console.Cli;
 
 namespace AoC.Leaderboard.Cli.Commands.Set;
 
-public class SetLeaderboardCommand : AsyncCommand
+public class SetLeaderboardCommand(IMediator mediator) : AsyncCommand
 {
-    private readonly IMediator _mediator;
-
-    public SetLeaderboardCommand(IMediator mediator)
+    public override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        _mediator = mediator;
-    }
-
-    public override async Task<int> ExecuteAsync(CommandContext context)
-    {
-        var leaderboards = await _mediator.Send(new GetLeaderboards());
-        var leaderboard = leaderboards.FirstOrDefault() ?? throw new("Unable to locate a private leaderboard for your account.");
+        var leaderboards = await mediator.Send(new GetLeaderboards(), cancellationToken);
+        var leaderboard = leaderboards.FirstOrDefault() ?? throw new Exception("Unable to locate a private leaderboard for your account.");
 
         if (leaderboards.Count() > 1)
         {
@@ -32,7 +25,7 @@ public class SetLeaderboardCommand : AsyncCommand
             leaderboard = AnsiConsole.Prompt(selectionPrompt);
         }
         
-        await _mediator.Send(new SetLeaderboard { Leaderboard = leaderboard });
+        await mediator.Send(new SetLeaderboard { Leaderboard = leaderboard }, cancellationToken);
 
         return 0;
     }

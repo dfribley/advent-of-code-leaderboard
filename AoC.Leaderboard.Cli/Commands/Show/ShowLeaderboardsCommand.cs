@@ -14,9 +14,9 @@ public class ShowLeaderboardsCommand : AsyncCommand
         _mediator = mediator;
     }
 
-    public async override Task<int> ExecuteAsync(CommandContext context)
+    public override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        var leaderboards = await _mediator.Send(new GetLeaderboards());
+        var leaderboards = await _mediator.Send(new GetLeaderboards(), cancellationToken);
 
         var table = new Table() { Border = TableBorder.Minimal };
 

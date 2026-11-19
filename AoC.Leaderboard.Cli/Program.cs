@@ -49,7 +49,7 @@ app.Configure(config =>
     exceptionHandler.RegisterHandler<SessionNotSetException, SessionNotSetHandler>();
     exceptionHandler.RegisterHandler<PuzzleNotAvailable, PuzzleNotAvailableHandler>();
 
-    config.SetExceptionHandler(exceptionHandler.Handle);
+    config.SetExceptionHandler((ex, _) => exceptionHandler.Handle(ex));
     config.SetInterceptor(new GlobalOptionsInterceptor());
 });
 

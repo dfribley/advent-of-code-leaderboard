@@ -25,7 +25,7 @@ public static class DependencyInjection
         })
         .AddHttpMessageHandler<ErrorMessageHandler>();
 
-        services.AddAutoMapper(typeof(LeaderboardProfiles));
+        services.AddAutoMapper(_ => { }, typeof(LeaderboardProfiles));
 
         return services;
     }

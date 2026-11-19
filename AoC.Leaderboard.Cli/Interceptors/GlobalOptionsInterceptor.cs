@@ -8,19 +8,18 @@ public class GlobalOptionsInterceptor : ICommandInterceptor
 {
     public void Intercept(CommandContext context, CommandSettings settings)
     {
-        if (settings is GlobalOptions globalOptions)
+        if (settings is not GlobalOptions globalOptions) return;
+        
+        if (!string.IsNullOrEmpty(globalOptions.EventId))
         {
-            if (!string.IsNullOrEmpty(globalOptions.EventId))
-            {
-                GlobalContext.EventOverride = globalOptions.EventId;
-            }
-
-            if (!string.IsNullOrEmpty(globalOptions.Leaderboard))
-            {
-                GlobalContext.LeaderboardOverride = globalOptions.Leaderboard;
-            }
-
-            GlobalContext.Debug = globalOptions.Debug;
+            GlobalContext.EventOverride = globalOptions.EventId;
         }
+
+        if (!string.IsNullOrEmpty(globalOptions.Leaderboard))
+        {
+            GlobalContext.LeaderboardOverride = globalOptions.Leaderboard;
+        }
+
+        GlobalContext.Debug = globalOptions.Debug;
     }
 }

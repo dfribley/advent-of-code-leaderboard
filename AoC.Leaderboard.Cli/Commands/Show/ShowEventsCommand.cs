@@ -1,4 +1,5 @@
-﻿using AoC.Leaderboard.Domain.Leaderboard.Queries;
+﻿using System.Text;
+using AoC.Leaderboard.Domain.Leaderboard.Queries;
 using MediatR;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -14,19 +15,29 @@ public class ShowEventsCommand : AsyncCommand
         _mediator = mediator;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    public override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        var events = await _mediator.Send(new GetEvents());
+        var events = await _mediator.Send(new GetEvents(), cancellationToken);
+        var totalStars = 0;
 
         var table = new Table { Border = TableBorder.Minimal };
         table.AddColumns("Event");
 
         foreach (var e in events)
         {
-            table.AddRow(e);
+            var rowText = new StringBuilder(e.Id);
+            
+            if (e.Stars > 0)
+            {
+                totalStars += e.Stars;
+                rowText.Append($" [yellow1] {e.Stars}*[/]");
+            }
+            
+            table.AddRow(rowText.ToString());
         }
 
         AnsiConsole.Write(table);
+        AnsiConsole.MarkupLine($"Total Stars: [yellow1]{totalStars}*[/]");
 
         return 0;
     }

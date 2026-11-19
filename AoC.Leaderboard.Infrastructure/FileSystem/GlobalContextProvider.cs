@@ -20,7 +20,7 @@ public class GlobalContextProvider : IContextProvider
         {
             if (File.Exists(FileName))
             {
-                using var openStream = File.OpenRead(FileName);
+                await using var openStream = File.OpenRead(FileName);
                 _currentContext = await JsonSerializer.DeserializeAsync<GlobalContext>(openStream);
             }
             else
@@ -36,9 +36,8 @@ public class GlobalContextProvider : IContextProvider
     {
         if (_currentContext != null)
         {
-            using var createStream = File.Create(FileName);
+            await using var createStream = File.Create(FileName);
             await JsonSerializer.SerializeAsync(createStream, _currentContext);
-            await createStream.DisposeAsync();
         }
     }
 }

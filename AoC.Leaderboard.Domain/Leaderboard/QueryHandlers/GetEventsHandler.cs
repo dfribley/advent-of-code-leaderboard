@@ -1,10 +1,11 @@
 ﻿using AoC.Leaderboard.Domain.Interfaces;
 using AoC.Leaderboard.Domain.Leaderboard.Queries;
+using AoC.Leaderboard.Domain.Models;
 using MediatR;
 
 namespace AoC.Leaderboard.Domain.Leaderboard.QueryHandlers;
 
-public class GetEventsHandler : IRequestHandler<GetEvents, IEnumerable<string>>
+public class GetEventsHandler : IRequestHandler<GetEvents, IEnumerable<Event>>
 {
     private readonly IEventService _eventService;
 
@@ -13,7 +14,7 @@ public class GetEventsHandler : IRequestHandler<GetEvents, IEnumerable<string>>
         _eventService = eventService;
     }
 
-    public async Task<IEnumerable<string>> Handle(GetEvents request, CancellationToken cancellationToken)
+    public async Task<IEnumerable<Event>> Handle(GetEvents request, CancellationToken cancellationToken)
     {
         return await _eventService.GetEventsAsync();
     }

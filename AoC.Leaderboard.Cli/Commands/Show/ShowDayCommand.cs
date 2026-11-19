@@ -43,18 +43,18 @@ public class ShowDayCommand : AsyncCommand<ShowDayCommand.Settings>
         _setContextCommand = setContextCommand;
     }
 
-    public async override Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    public async override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         try
         {
-            await _mediator.Send(new GetContext());
+            await _mediator.Send(new GetContext(), cancellationToken);
         }
         catch (Exception e) when (e is EventNotSet || e is LeaderboardNotSet)
         {
-            await _setContextCommand.ExecuteAsync(context);
+            await _setContextCommand.ExecuteAsync(context, cancellationToken);
         }
 
-        var dailyLeaderboard = await _mediator.Send(new GetDailyLeaderboard { Day = settings.Day });
+        var dailyLeaderboard = await _mediator.Send(new GetDailyLeaderboard { Day = settings.Day }, cancellationToken);
 
         AnsiConsole.Write(new Padder(new Text(dailyLeaderboard.Title)));
         AnsiConsole.Write(settings.ShowTimeline ? RenderTimeline(dailyLeaderboard) : RenderBoard(dailyLeaderboard));
