@@ -6,26 +6,36 @@ namespace AoC.Leaderboard.Infrastructure.FileSystem;
 
 public class GlobalContextProvider : IContextProvider
 {
-    private readonly string FileName;
+    private readonly string _fileName;
     private GlobalContext _currentContext;
 
     public GlobalContextProvider()
     {
-        FileName = $"{Path.GetDirectoryName(Environment.GetCommandLineArgs()[0])}{Path.DirectorySeparatorChar}context.json";
+        var userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        if (string.IsNullOrEmpty(userHome))
+        {
+            throw new InvalidOperationException("Unable to determine user home directory.");
+        }
+        
+        var aocLbDir = Path.Combine(userHome, ".aoclb");
+        Directory.CreateDirectory(aocLbDir);
+
+        _fileName = Path.Combine(aocLbDir, "context.json");
     }
 
     public async Task<GlobalContext> GetCurrentContextAsync()
     {
         if (_currentContext == null)
         {
-            if (File.Exists(FileName))
+            if (File.Exists(_fileName))
             {
-                await using var openStream = File.OpenRead(FileName);
+                await using var openStream = File.OpenRead(_fileName);
                 _currentContext = await JsonSerializer.DeserializeAsync<GlobalContext>(openStream);
             }
             else
             {
-                _currentContext = new();
+                _currentContext = new GlobalContext();
             }
         }
 
@@ -36,7 +46,7 @@ public class GlobalContextProvider : IContextProvider
     {
         if (_currentContext != null)
         {
-            await using var createStream = File.Create(FileName);
+            await using var createStream = File.Create(_fileName);
             await JsonSerializer.SerializeAsync(createStream, _currentContext);
         }
     }
