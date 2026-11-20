@@ -11,17 +11,7 @@ public class GlobalContextProvider : IContextProvider
 
     public GlobalContextProvider()
     {
-        var userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-        if (string.IsNullOrEmpty(userHome))
-        {
-            throw new InvalidOperationException("Unable to determine user home directory.");
-        }
-        
-        var aocLbDir = Path.Combine(userHome, ".aoclb");
-        Directory.CreateDirectory(aocLbDir);
-
-        _fileName = Path.Combine(aocLbDir, "context.json");
+        _fileName = Path.Combine(FileSystemHelper.GetDataDirectory(), "context.json");
     }
 
     public async Task<GlobalContext> GetCurrentContextAsync()

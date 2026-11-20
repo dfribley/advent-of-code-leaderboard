@@ -1,4 +1,5 @@
-﻿using AoC.Leaderboard.Cli.Commands.Set;
+﻿using System.Reflection;
+using AoC.Leaderboard.Cli.Commands.Set;
 using AoC.Leaderboard.Cli.Commands.Show;
 using AoC.Leaderboard.Cli.DependencyInjection;
 using AoC.Leaderboard.Cli.ExceptionHandlers;
@@ -51,6 +52,7 @@ app.Configure(config =>
 
     config.SetExceptionHandler((ex, _) => exceptionHandler.Handle(ex));
     config.SetInterceptor(new GlobalOptionsInterceptor());
+    config.SetApplicationVersion(Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown");
 });
 
 return await app.RunAsync(args);
