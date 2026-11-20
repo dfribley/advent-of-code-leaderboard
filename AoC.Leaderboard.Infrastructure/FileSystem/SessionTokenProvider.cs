@@ -13,17 +13,7 @@ public class SessionTokenProvider : ISessionProvider
 
     public SessionTokenProvider(IDataProtectionProvider provider)
 	{
-        var userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-        if (string.IsNullOrEmpty(userHome))
-        {
-            throw new InvalidOperationException("Unable to determine user home directory.");
-        }
-        
-        var aocLbDir = Path.Combine(userHome, ".aoclb");
-        Directory.CreateDirectory(aocLbDir);
-        
-        _fileName = Path.Combine(aocLbDir, "session");
+        _fileName = Path.Combine(FileSystemHelper.GetDataDirectory(), "session");
         _protector = provider.CreateProtector("AoC.SessionTokenProvider");
     }
 
