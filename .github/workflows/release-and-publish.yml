@@ -15,6 +15,7 @@ jobs:
       - name: Check for Existing Release
         id: check_release
         env:
+          GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         shell: bash
         run: |
