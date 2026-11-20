@@ -86,3 +86,84 @@ jobs:
           asset_path: ./${{ steps.pack.outputs.asset_name }}
           asset_name: ${{ steps.pack.outputs.asset_name }}
           asset_content_type: ${{ steps.pack.outputs.release_asset_type }}
+
+  update_homebrew_tap:
+    name: Update Homebrew Tap
+    needs: build_release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Tap
+        uses: actions/checkout@v4
+        with:
+          repository: dfribley/homebrew-tools
+          ref: main
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      
+      - name: Update formula from release
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+          
+          tag = os.environ["TAG"]
+          repo = os.environ["GITHUB_REPOSITORY"]
+          release = json.loads(subprocess.check_output(
+            ["gh", "release", "view", tag, "--repo", repo, "--json", "assets"],
+            text=True,
+          ))
+          formula = Path("Formula/aoclb.rb")
+          text = formula.read_text()
+        
+          for runtime in ("osx-x64", "osx-arm64", "linux-x64"):
+            name = f"aoclb-{runtime}.tar.gz"
+            assets = [asset for asset in release["assets"] if asset["name"] == name]
+            if len(assets) != 1:
+              raise SystemExit(f"Expected one asset named {name}; found {len(assets)}")
+            
+            digest = assets[0].get("digest")
+            if not isinstance(digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+              raise SystemExit(f"Missing or invalid SHA-256 digest for {name}: {digest}")
+            sha256 = digest.removeprefix("sha256:")
+            
+            pattern = re.compile(
+              r'(?m)^([ \t]*url "https://github\.com/'
+              + re.escape(repo)
+              + r'/releases/download/)[^"/]+(/aoclb-'
+              + re.escape(runtime)
+              + r'\.tar\.gz"\n[ \t]*sha256 ")[a-fA-F0-9]{64}(")'
+            )
+            text, count = pattern.subn(
+              lambda match: match[1] + tag + match[2] + sha256 + match[3],
+              text,
+            )
+            if count != 1:
+              raise SystemExit(f"Expected one URL/hash pair for {runtime}; found {count}")
+            
+          formula.write_text(text)
+          PY
+          
+      - name: Commit and push changes
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- Formula/aoclb.rb; then
+            echo "Formula is already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/aoclb.rb
+          git commit -m "Update aoclb to $TAG"
+          git push origin HEAD:main
