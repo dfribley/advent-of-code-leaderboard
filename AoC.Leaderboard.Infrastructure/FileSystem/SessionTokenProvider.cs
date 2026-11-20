@@ -7,24 +7,34 @@ namespace AoC.Leaderboard.Infrastructure.FileSystem;
 
 public class SessionTokenProvider : ISessionProvider
 {
-    private readonly string FileName;
+    private readonly string _fileName;
     private readonly IDataProtector _protector;
     private string _sessionToken;
 
     public SessionTokenProvider(IDataProtectionProvider provider)
 	{
-        FileName = $"{Path.GetDirectoryName(Environment.GetCommandLineArgs()[0])}{Path.DirectorySeparatorChar}session";
+        var userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        if (string.IsNullOrEmpty(userHome))
+        {
+            throw new InvalidOperationException("Unable to determine user home directory.");
+        }
+        
+        var aocLbDir = Path.Combine(userHome, ".aoclb");
+        Directory.CreateDirectory(aocLbDir);
+        
+        _fileName = Path.Combine(aocLbDir, "session");
         _protector = provider.CreateProtector("AoC.SessionTokenProvider");
     }
 
     public string GetSessionToken()
     {
-        if (!File.Exists(FileName))
+        if (!File.Exists(_fileName))
         {
             throw new SessionNotSetException();
         }
 
-        _sessionToken ??= File.ReadAllText(FileName);
+        _sessionToken ??= File.ReadAllText(_fileName);
 
         try
         {
@@ -40,6 +50,6 @@ public class SessionTokenProvider : ISessionProvider
     {
         _sessionToken = _protector.Protect(sessionToken);
 
-        File.WriteAllText(FileName, _sessionToken);
+        File.WriteAllText(_fileName, _sessionToken);
     }
 }
